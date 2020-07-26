@@ -1,27 +1,28 @@
 import React, { useState, useEffect, useRef } from 'react'
 import "./App.css"
-import io from 'socket.io-client'
-
-const socket = io.connect('http://localhost:4000');
-
-socket.on('error', function (err) {
-  console.log('received socket error:')
-  console.log(err)
-})
+import { initiateSocket, disconnectSocket, sendMessage, subscribeToChat } from './Socket';
 
 const Chat = () => {
   const [messages, setMessages] = useState([])
 
-  socket.on('msg', function(msg){
-    setMessages(messages.concat(msg))
-  });
-
-  //const messagesEndRef = useRef(null);
-  /*const scrollToBottom = () => {
-    messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+  const messagesEndRef = useRef(null);
+  const scrollToBottom = () => {
+    messagesEndRef.current.scrollIntoView();
   }
 
-  useEffect(scrollToBottom, [messages]);*/
+  useEffect(scrollToBottom, [messages]);
+
+  useEffect(() => {
+    initiateSocket();
+
+    subscribeToChat((err, data) => {
+      setMessages(messages.concat(data))
+    });
+
+    return () => {
+      disconnectSocket();
+    }
+  })
 
   return (
     <div className="App">
@@ -34,6 +35,7 @@ const Chat = () => {
             message={msg.message}
           />
         )}
+        <div ref={messagesEndRef}></div>
       </div>
       <MessageEntry
         setMessages={setMessages}
@@ -58,7 +60,8 @@ const MessageEntry = (props) => {
   const handleSubmit = (evt) => {
     evt.preventDefault();
     //props.setMessages(props.messages.concat({"id":props.messages.length + 1, "message": message, "user": name}));
-    socket.emit('msg', {"message": message, "user": name});
+    //socket.emit('msg', {"message": message, "user": name});
+    sendMessage({"message": message, "user": name})
     setMessage("");
   }
 
@@ -83,8 +86,14 @@ const MessageEntry = (props) => {
   )
 }
 
-
 const App = () => {
+  useEffect(() => {
+    initiateSocket();
+    return () => {
+      disconnectSocket();
+    }
+  });
+
   return (
     <div className="App">
       <Chat />
