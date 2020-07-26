@@ -1,0 +1,14 @@
+.App {
+  margin: 5px;
+}
+
+.Header {
+  text-align: center;
+}
+
+.Messages {
+  border: 2px solid black;
+  padding: 5px;
+  max-height: 100px;
+  overflow: auto;
+}
